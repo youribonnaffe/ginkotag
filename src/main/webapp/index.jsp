@@ -9,7 +9,7 @@
 <%
 	String wsURL = (String) request.getAttribute("GINKO_URL");
 %>
-<c:if test="${ empty wsURL }">
+<c:if test="${empty wsURL}">
 	<h3>URL to hit : <a href="<%=wsURL%>"><%=wsURL%></a></h3>
 </c:if>
 <form action="index.do" method="post">Stop : <select
