@@ -32,8 +32,8 @@ public class URLBuilderServlet extends HttpServlet {
 
 	private void doGetOrPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		String sn = req.getParameter(NABAZTAG_SN_PARAM); // 002185BA6A34
-		String token = req.getParameter(NABAZTAG_TOKEN_PARAM); // 1228730228
+		String sn = req.getParameter(NABAZTAG_SN_PARAM);
+		String token = req.getParameter(NABAZTAG_TOKEN_PARAM);
 		String stop = req.getParameter(NABAZTAG_STOP_PARAM);
 
 		if (sn != null && token != null && stop != null) {

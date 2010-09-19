@@ -4,27 +4,32 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.tools.ant.filters.StringInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import com.appspot.ginkotag.TextSplitterUtil;
 
 public class RealRabbitCommand implements IRabbitCommand {
 
-	private static final Logger LOGGER = LoggerFactory
+	private static final Logger LOGGER = Logger
 			.getLogger(RealRabbitCommand.class.getName());
 
+	// in secs
+	private static final int RESPONSE_TIMEOUT = 10;
 	private static final String MESSAGE_NODE = "message";
+	private static final int MAX_TTS_LENGTH = 100;
 
 	private final Rabbit rabbit;
 	private String textToSay;
@@ -47,7 +52,7 @@ public class RealRabbitCommand implements IRabbitCommand {
 			InputStream response = sendCommand();
 			return readResponse(response);
 		} catch (Exception e) {
-			LOGGER.error("Error occurred when executing rabbit command", e);
+			LOGGER.warning("Error occurred when executing rabbit command " + e);
 		}
 		return RabbitCommandResponse.NO_RESPONSE;
 	}
@@ -66,22 +71,28 @@ public class RealRabbitCommand implements IRabbitCommand {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder constructeur;
 		constructeur = factory.newDocumentBuilder();
-		Document document = constructeur.parse(new StringInputStream(
-				responseContent));
+		Document document = constructeur.parse(new InputSource(
+				new StringReader(responseContent)));
 
 		Element messageElement = document.getElementById(MESSAGE_NODE);
 		return RabbitCommandResponse.valueOf(messageElement.getNodeValue());
 	}
 
 	private InputStream sendCommand() throws MalformedURLException, IOException {
-		String violetApiUrl = VioletAPI.URL + "?" + VioletAPI.SN_PARAM + "="
-				+ rabbit.getSn() + "&" + VioletAPI.TOKEN_PARAM + "="
-				+ rabbit.getToken() + "&" + VioletAPI.TTS_PARAM + "="
-				+ textToSay;
-		URL nabaztagURL = new URL(violetApiUrl);
-		URLConnection nabaztagConnection = nabaztagURL.openConnection();
-		nabaztagConnection.setReadTimeout(10);
-		return nabaztagConnection.getInputStream();
+		InputStream inputStream = null;
+		String[] splittedTextToSay = TextSplitterUtil.split(textToSay,
+				MAX_TTS_LENGTH);
+		for (String toSay : splittedTextToSay) {
+			String violetApiUrl = VioletAPI.URL + "?" + VioletAPI.SN_PARAM
+					+ "=" + rabbit.getSn() + "&" + VioletAPI.TOKEN_PARAM + "="
+					+ rabbit.getToken() + "&" + VioletAPI.TTS_PARAM + "="
+					+ toSay;
+			URL nabaztagURL = new URL(violetApiUrl);
+			URLConnection nabaztagConnection = nabaztagURL.openConnection();
+			nabaztagConnection.setReadTimeout(RESPONSE_TIMEOUT);
+			inputStream = nabaztagConnection.getInputStream();
+		}
+		return inputStream;
 	}
 
 	@Override
