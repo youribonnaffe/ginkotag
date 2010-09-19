@@ -6,11 +6,10 @@
 </head>
 <body>
 <h2>Ginko web services for Nabaztag</h2>
-<%
-	String wsURL = (String) request.getAttribute("GINKO_URL");
-%>
-<c:if test="${empty wsURL}">
-	<h3>URL to hit : <a href="<%=wsURL%>"><%=wsURL%></a></h3>
+<c:set var="wsURL" value="${requestScope['GINKO_URL']}" />
+<c:if test="${wsURL != null}">
+	<h3>URL to hit : <a href="<c:out value="${wsURL}"/>"><c:out
+		value="${wsURL}" /></a></h3>
 </c:if>
 <form action="index.do" method="post">Stop : <select
 	name="nabaztag_stop">
